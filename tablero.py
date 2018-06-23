@@ -1,239 +1,230 @@
-from variables import azul, blanco, vacio
-from copy import deepcopy
+import pygame, sys, time, os
+from pygame.locals import *
+import time
+from variables import azul, blanco, dificultad, humano, computadora
 
-
-class Tablero:
+class Graphics:
 
     def __init__(self):
-        self.tablero = [[0, 0, 0, 0, 0, 0, 0, 0,],
-                        [0, 0, 0, 0, 0, 0, 0, 0,],
-                        [0, 0, 0, 0, 0, 0, 0, 0,],
-                        [0, 0, 0, 0, 0, 0, 0, 0,],
-                        [0, 0, 0, 0, 0, 0, 0, 0,],
-                        [0, 0, 0, 0, 0, 0, 0, 0,],
-                        [0, 0, 0, 0, 0, 0, 0, 0,],
-                        [0, 0, 0, 0, 0, 0, 0, 0,]]
-        self.tablero[3][4] = azul
-        self.tablero[4][3] = azul
-        self.tablero[3][3] = blanco
-        self.tablero[4][4] = blanco
-        self.movvalido = []
+        pygame.init()
 
+        self.negro = (0, 0, 0)
+        self.fondo = (143, 188, 143)
+        self.blanco = (255, 255, 255)
+        self.azul = (0, 0, 128)
+        self.moradooscuro = (72, 61, 139)
 
-    def objeto(self, f, c):
-        return self.tablero[f][c]
+        self.screensize = (640, 480)
+        self.posiciontablero = (100, 20)
+        self.TABLERO = (120, 40)
+        self.tablerotamano = 400
+        self.espaciotamano = 50
+        self.screen = pygame.display.set_mode(self.screensize)
 
+        self.azulpalabrapos = (5, self.screensize[1] / 4)
+        self.blancopalabrapos = (560, self.screensize[1] / 4)
+        self.font = pygame.font.Font("LemonMilklight.otf", 22)
+        self.puntuacionfont = pygame.font.Font("LemonMilk.otf", 50)
 
-    def posibles(self, fila, columna, color):
+        self.tableroimg = pygame.image.load('tablero.png')
+        self.azulimg = pygame.image.load('ficha azul.png')
+        self.blancoimg = pygame.image.load('ficha blanca.png')
+        self.tipimg = pygame.image.load('ficha tips.png')
+        self.vacioimg = pygame.image.load('vacio.png')
+        self.animacion1img = pygame.image.load('animacion 1.png')
+        self.animacion2img = pygame.image.load('animacion 2.png')
+
+    def mostraropciones(self):
+        jugador1 = humano
+        jugador2 = computadora
+        nivel = dificultad
+
+        while True:
+            self.screen.fill(self.fondo)
+            titulofont = pygame.font.Font("Candle Mustard.ttf", 80)
+            titulo = titulofont.render("Othello", True, self.blanco)
+            tituloposicion = titulo.get_rect(centerx=self.screen.get_width() / 2, centery=100)
+
+            comenzartexto= self.font.render("Comenzar", True, self.blanco)
+            comenzarposicion = comenzartexto.get_rect(centerx=self.screen.get_width() / 2, centery=220)
+            jugador1texto = self.font.render("Primer jugador ", True, self.blanco)
+            jugador1pos = jugador1texto.get_rect(centerx=self.screen.get_width() / 2, centery=260)
+            jugador2texto = self.font.render("Segundo jugador ", True, self.blanco)
+            jugador2pos = jugador2texto.get_rect(centerx=self.screen.get_width() / 2, centery=300)
+            niveltexto = self.font.render("Nivel de computadora ", True, self.blanco)
+            nivelpos = niveltexto.get_rect(centerx=self.screen.get_width() / 2, centery=340)
+
+            self.screen.blit(titulo, tituloposicion)
+            self.screen.blit(comenzartexto, comenzarposicion)
+            self.screen.blit(jugador1texto, jugador1pos)
+            self.screen.blit(jugador2texto, jugador2pos)
+            self.screen.blit(niveltexto, nivelpos)
+
+            for event in pygame.event.get():
+                if event.type == QUIT:
+                    sys.exit(0)
+                elif event.type == MOUSEBUTTONDOWN:
+                    mouse_x, mouse_y = pygame.mouse.get_pos()
+                    if comenzarposicion.collidepoint(mouse_x, mouse_y):
+                        return jugador1, jugador2, nivel
+                    elif jugador1pos.collidepoint(mouse_x, mouse_y):
+                        jugador2 = self.elegirjugador()
+                    elif jugador2pos.collidepoint(mouse_x, mouse_y):
+                        jugador2 = self.elegirjugador()
+                    elif nivelpos.collidepoint(mouse_x, mouse_y):
+                        nivelpos = self.elegirnivel()
+
+            pygame.display.flip()
+
+    def mostrarganador(self, colorjugador):
+        self.screen.fill(pygame.Color(self.fondo))
+        font = pygame.font.SysFont("Courier-Bold", 34)
+        if colorjugador == blanco:
+            msg = font.render("Blanco ganó", True, self.blanco)
+        elif colorjugador == azul:
+            msg = font.render("Azul ganó", True, self.blanco)
+        else:
+            msg = font.render("Empate", True, self.blanco)
+        self.screen.blit(msg, msg.get_rect(centerx=self.screen.get_width() / 2, centery=120))
+        pygame.display.flip()
+
+    def elegirjugador(self):
+        while True:
+            self.screen.fill(self.fondo)
+            titulofont = pygame.font.Font("Candle Mustard.ttf", 80)
+            titulo = titulofont.render("Othello", True, self.moradooscuro)
+            tituloposicion = titulo.get_rect(centerx=self.screen.get_width() / 2,centery=100)
+            humanotexto = self.font.render("Humano", True, self.blanco)
+            humanopos = humanotexto.get_rect(centerx=self.screen.get_width() / 2, centery=180)
+            computadoratexto = self.font.render("Computer", True, self.blanco)
+            computadorapos = computadoratexto.get_rect(centerx=self.screen.get_width() / 2,centery=360)
+
+            self.screen.blit(titulo, tituloposicion)
+            self.screen.blit(humanotexto, humanopos)
+            self.screen.blit(computadoratexto, computadorapos)
+
+            for event in pygame.event.get():
+                if event.type == QUIT:
+                    sys.exit(0)
+                elif event.type == MOUSEBUTTONDOWN:
+                    mouse_x, mouse_y = pygame.mouse.get_pos()
+                    if humanopos.collidepoint(mouse_x, mouse_y):
+                        return humano
+                    elif computadorapos.collidepoint(mouse_x, mouse_y):
+                        return computadora
+            pygame.display.flip()
+
+    def elegirnivel(self):
+        while True:
+            self.screen.fill(self.fondo)
+            titulofont = pygame.font.Font("Candle Mustard.ttf", 80)
+            titulo = titulofont.render("Othello", True, self.moradooscuro)
+            tituloposicion = titulo.get_rect(centerx=self.screen.get_width() / 2,centery=100)
+            unotexto = self.font.render("Nivel 1", True, self.blanco)
+            unopos = unotexto.get_rect(centerx=self.screen.get_width() / 2,centery=180)
+            dostexto = self.font.render("Nivel 2", True, self.blanco)
+            dospos = dostexto.get_rect(centerx=self.screen.get_width() / 2,centery=240)
+            trestexto = self.font.render("Nivel 3", True, self.blanco)
+            trespos = trestexto.get_rect(centerx=self.screen.get_width() / 2,centery=300)
+
+            self.screen.blit(titulo, tituloposicion)
+            self.screen.blit(unotexto, unopos)
+            self.screen.blit(dostexto, dospos)
+            self.screen.blit(trestexto, trespos)
+
+            for event in pygame.event.get():
+                if event.type == QUIT:
+                    sys.exit(0)
+                elif event.type == MOUSEBUTTONDOWN:
+                    mouse_x, mouse_y = pygame.mouse.get_pos()
+                    if unopos.collidepoint(mouse_x, mouse_y):
+                        return 1
+                    elif dospos.collidepoint(mouse_x, mouse_y):
+                        return 2
+                    elif trespos.collidepoint(mouse_x, mouse_y):
+                        return 3
+
+            pygame.display.flip()
+            time.sleep(.05)
+
+    def mostrarjuego(self):
+        self.background = pygame.Surface(self.screen.get_size()).convert()
+        self.background.fill(self.fondo)
+        self.puntajetamano = 50
+        self.puntaje1 = pygame.Surface((self.puntajetamano, self.puntajetamano))
+        self.puntaje2 = pygame.Surface((self.puntajetamano, self.puntajetamano))
+        self.screen.blit(self.background, (0, 0), self.background.get_rect())
+        self.screen.blit(self.tableroimg, self.posiciontablero, self.tableroimg.get_rect())
+        self.ponerpieza((3, 3), blanco)
+        self.ponerpieza((4, 4), blanco)
+        self.ponerpieza((3, 4), azul)
+        self.ponerpieza((4, 3), azul)
+        pygame.display.flip()
+
+    def ponerpieza(self, pos, color):
+        if pos == None:
+            return
+        pos = (pos[1], pos[0])
         if color == azul:
-            otro = blanco
+            img = self.azulimg
+        elif color == blanco:
+            img = self.blancoimg
         else:
-            otro = azul
-        espacios = []
-        if fila < 0 or fila > 7 or columna < 0 or columna > 7:
-            return espacios
-        f = fila - 1
-        if f >= 0 and self.tablero[f][columna] == otro:
-            f = f - 1
-            while f >= 0 and self.tablero[f][columna] == otro:
-                f = f - 1
-            if f >= 0 and self.tablero[f][columna] == 0:
-                espacios = espacios + [(f, columna)]
-        f = fila - 1
-        c = columna + 1
-        if f >= 0 and c < 8 and self.tablero[f][c] == otro:
-            f = f - 1
-            c = c + 1
-            while f >= 0 and c < 8 and self.tablero[f][c] == otro:
-                f = f - 1
-                c = c + 1
-            if f >= 0 and c < 8 and self.tablero[f][c] == 0:
-                espacios = espacios + [(f, c)]
-        c = columna + 1
-        if c < 8 and self.tablero[fila][c] == otro:
-            c = c + 1
-            while c < 8 and self.tablero[fila][c] == otro:
-                c = c + 1
-            if c < 8 and self.tablero[fila][c] == 0:
-                espacios = espacios + [(fila, c)]
-        f = fila + 1
-        c = columna + 1
-        if f < 8 and c < 8 and self.tablero[f][c] == otro:
-            f = f + 1
-            c = c + 1
-            while f < 8 and c < 8 and self.tablero[f][c] == otro:
-                f = f + 1
-                c = c + 1
-            if f < 8 and c < 8 and self.tablero[f][c] == 0:
-                espacios = espacios + [(f, c)]
-        f = fila + 1
-        if f < 8 and self.tablero[f][columna] == otro:
-            f = f + 1
-            while f < 8 and self.tablero[f][columna] == otro:
-                f = f + 1
-            if f < 8 and self.tablero[f][columna] == 0:
-                espacios = espacios + [(f, columna)]
-        f = fila + 1
-        c = columna - 1
-        if f < 8 and c >= 0 and self.tablero[f][c] == otro:
-            f = f + 1
-            c = c - 1
-            while f < 8 and c >= 0 and self.tablero[f][c] == otro:
-                f = f + 1
-                c = c - 1
-            if f < 8 and c >= 0 and self.tablero[f][c] == 0:
-                espacios = espacios + [(f, c)]
-        c = columna - 1
-        if c >= 0 and self.tablero[fila][c] == otro:
-            c = c - 1
-            while c >= 0 and self.tablero[fila][c] == otro:
-                c = c - 1
-            if c >= 0 and self.tablero[fila][c] == 0:
-                espacios = espacios + [(fila, c)]
-        f = f - 1
-        c = columna - 1
-        if f >= 0 and c >= 0 and self.tablero[f][c] == otro:
-            f = f - 1
-            c = c - 1
-            while f >= 0 and c >= 0 and self.tablero[f][c] == otro:
-                f = f - 1
-                c = c - 1
-            if f >= 0 and c >= 0 and self.tablero[f][c] == 0:
-                espacios = espacios + [(f, c)]
+            img = self.tipimg
 
-        return espacios
+        x = pos[0] * self.espaciotamano + self.TABLERO[0]
+        y = pos[1] * self.espaciotamano + self.TABLERO[1]
 
+        self.screen.blit(img, (x, y), img.get_rect())
+        pygame.display.flip()
 
-    def movimientovalido(self, color):
-        if color == azul:
-            otro = blanco
-        else:
-            otro = azul
-        espacios = []
+    def espaciovacio(self, pos):
+        pos = (pos[1], pos[0])
+        x = pos[0] * self.espaciotamano + self.TABLERO[0]
+        y = pos[1] * self.espaciotamano + self.TABLERO[1]
+        self.screen.blit(self.vacioimg, (x, y), self.vacioimg.get_rect())
+        pygame.display.flip()
+
+    def movimientomouse(self):
+        while True:
+            for event in pygame.event.get():
+                if event.type == MOUSEBUTTONDOWN:
+                    (mouse_x, mouse_y) = pygame.mouse.get_pos()
+                    if mouse_x > self.tablerotamano + self.TABLERO[0] or \
+                       mouse_x < self.TABLERO[0] or \
+                       mouse_y > self.tablerotamano + self.TABLERO[1] or \
+                       mouse_y < self.TABLERO[1]:
+                        continue
+
+                    posicion = ((mouse_x - self.TABLERO[0]) // self.espaciotamano), \
+                               ((mouse_y - self.TABLERO[1]) // self.espaciotamano)
+                    posicion = (posicion[1], posicion[0])
+                    return posicion
+                elif event.type == QUIT:
+                    sys.exit(0)
+            time.sleep(.05)
+
+    def update(self, tablero, azules, blancos):
         for f in range(8):
             for c in range(8):
-                if self.tablero[f][c] == color:
-                    espacios = espacios + self.posibles(f, c, color)
-        espacios = list(set(espacios))
-        self.movvalido = espacios
-        return espacios
+                if tablero[f][c] != 0:
+                    self.ponerpieza((f, c), tablero[f][c])
 
+        azulesstr = '%02d ' % int(azules)
+        blancosstr = '%02d ' % int(blancos)
+        self.mostrarpuntaje(azulesstr, blancosstr)
+        pygame.display.flip()
 
-    def efectuarmovimiento(self, movimiento, color):
-        if movimiento in self.movvalido:
-            self.tablero[movimiento[0]][movimiento[1]] = color
-            for n in range(1, 9):
-                self.flip(n, movimiento, color)
+    def mostrarpuntaje(self, azulstr, blancostr):
+        texto = self.puntuacionfont.render(azulstr, True, self.azul, self.fondo)
+        texto2 = self.puntuacionfont.render(blancostr, True, self.blanco, self.fondo)
+        self.screen.blit(texto, (self.azulpalabrapos[0], self.azulpalabrapos[1] + 40))
+        self.screen.blit(texto2, (self.blancopalabrapos[0], self.blancopalabrapos[1] + 40))
 
+    def quit(self):
+        for event in pygame.event.get():
+            if event.type == QUIT:
+                sys.exit(0)
+            elif event.type == KEYDOWN:
+                break
 
-    def cambiar(self, direccion, posicion, color):
-        if direccion == 1:
-            filainc = -1
-            colinc = 0
-        elif direccion == 2:
-            filainc = -1
-            colinc = 1
-        elif direccion == 3:
-            filainc = 0
-            colinc = 1
-        elif direccion == 4:
-            filainc = 1
-            colinc = 1
-        elif direccion == 5:
-            filainc = 1
-            colinc = 0
-        elif direccion == 6:
-            filainc = 1
-            colinc = -1
-        elif direccion == 7:
-            filainc = 0
-            colinc = -1
-        elif direccion == 8:
-            filainc = -1
-            colinc = -1
-        espacios = []
-        f = posicion[0] + filainc
-        c = posicion[1] + colinc
-        if color == blanco:
-            otro = azul
-        else:
-            otro = blanco
-
-        if f in range(8) and c in range(8) and self.tablero[f][c] == otro:
-            espacios = espacios + [(f, c)]
-            f = f + filainc
-            c = c + colinc
-            while f in range(8) and c in range(8) and self.tablero[f][c] == otro:
-                espacios = espacios + [(f, c)]
-                f = f + filainc
-                c = c + colinc
-            if f in range(8) and c in range(8) and self.tablero[f][c] == color:
-                for pos in espacios:
-                    self.tablero[pos[0]][pos[1]] = color
-
-    def devolvercambios(self):
-        blancos, azules, vacios = self.contarpiezas()
-        return self.tablero, azules, blancos
-
-    def juegotermino(self):
-        blancos, azules, vacios = self.contarpiezas()
-        if blancos == 0 or azules == 0 or vacios == 0:
-            return True
-        if self.movimientovalido(azul) == [] and self.movimientovalido(blanco) == []:
-            return True
-        return False
-
-    def formartablero(self):
-        for f in range(8):
-            print(f, ' |', end=' ')
-            for c in range(8):
-                if self.tablero[f][c] == azul:
-                    print('A', end=' ')
-                elif self.tablero[f][c] == blanco:
-                    print('B', end=' ')
-                else:
-                    print(' ', end=' ')
-                print('|', end=' ')
-            print()
-
-    def contarpiezas(self):
-        blancos = 0
-        azules = 0
-        vacios = 0
-        for f in range(8):
-            for c in range(8):
-                if self.tablero[f][c] == blanco:
-                    blancos += 1
-                elif self.tablero[f][c] == azul:
-                    azules += 1
-                else:
-                    vacios += 1
-        return blancos, azules, vacios
-
-    def comparar(self, otrotablero):
-        tablerodif = Tablero()
-        tablerodif.tablero[3][4] = 0
-        tablerodif.tablero[3][3] = 0
-        tablerodif.tablero[4][3] = 0
-        tablerodif.tablero[4][4] = 0
-        for f in range(8):
-            for c in range(8):
-                if otrotablero.tablero[f][c] != self.tablero[f][c]:
-                    otrotablero.tablero[f][c] = otrotablero.tablero[f][c]
-        return otrotablero
-
-    def espaciosalcostado(self, color):
-        ecostado = 0
-        for x, y in [(a, b) for a in range(8) for b in range(8) if self.tablero[a][b] == color]:
-            for f, c in [(a, b) for a in [-1, 0, 1] for b in [-1, 0, 1]]:
-                if 0 <= x + f <= 7 and 0 <= y + c <= 7:
-                    if self.tablero[x + f][y + c] == vacio:
-                        ecostado += 1
-        return ecostado
-
-    def siguientemov(self, color):
-        movvalido = self.movimientovalido(color)
-        for movimiento in movvalido:
-            nuevotablero = deepcopy(self)
-            nuevotablero.efectuarmovimiento(movimiento, color)
-            yield nuevotablero
