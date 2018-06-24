@@ -5,6 +5,10 @@ import tablero
 from variables import azul, blanco
 
 
+pygame.mixer.init(44100, -16,2,2048)
+pygame.mixer.music.load('kirby.mp3')
+pygame.mixer.music.play(-1)
+
 class Juego:
 
     def __init__(self):
