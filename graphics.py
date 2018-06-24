@@ -151,8 +151,12 @@ class Graphics:
         pos = (pos[1], pos[0])
         if color == azul:
             img = self.azulimg
+            effect = pygame.mixer.Sound('pop.ogg')
+            effect.play()
         elif color == blanco:
             img = self.blancoimg
+            effect = pygame.mixer.Sound('pop.ogg')
+            effect.play()
         else:
             img = self.vacioimg
         x = pos[0] * self.espaciotamano + self.posiciontablero[0]
